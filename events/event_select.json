@@ -1,0 +1,89 @@
+{
+    "version": 2,
+    "path": "/default/orderSomething",
+    "httpMethod": "POST",
+    "headers": {
+        "Content-Length": "365",
+        "Content-Type": "application/json; charset=utf-8",
+        "Host": "92miy3flb3.execute-api.ap-northeast-1.amazonaws.com",
+        "User-Agent": "LineBotWebhook/1.0",
+        "X-Amzn-Trace-Id": "Root=1-5e537c0e-435273c64564614a8646e1cc",
+        "X-Forwarded-For": "147.92.149.170",
+        "X-Forwarded-Port": "443",
+        "X-Forwarded-Proto": "https",
+        "X-Line-Signature": "dl0mrdHT9NewIKVTkX1plQmYDXoGrMaL8ZwXbJwMD1M=",
+        "accept": "*/*"
+    },
+    "multiValueHeaders": {
+        "Content-Length": [
+            "365"
+        ],
+        "Content-Type": [
+            "application/json; charset=utf-8"
+        ],
+        "Host": [
+            "92miy3flb3.execute-api.ap-northeast-1.amazonaws.com"
+        ],
+        "User-Agent": [
+            "LineBotWebhook/1.0"
+        ],
+        "X-Amzn-Trace-Id": [
+            "Root=1-5e537c0e-435273c64564614a8646e1cc"
+        ],
+        "X-Forwarded-For": [
+            "147.92.149.170"
+        ],
+        "X-Forwarded-Port": [
+            "443"
+        ],
+        "X-Forwarded-Proto": [
+            "https"
+        ],
+        "X-Line-Signature": [
+            "dl0mrdHT9NewIKVTkX1plQmYDXoGrMaL8ZwXbJwMD1M="
+        ],
+        "accept": [
+            "*/*"
+        ]
+    },
+    "queryStringParameters": null,
+    "multiValueQueryStringParameters": null,
+    "requestContext": {
+        "accountId": "475353462291",
+        "apiId": "92miy3flb3",
+        "authorizer": {
+            "claims": null,
+            "scopes": null
+        },
+        "domainName": "92miy3flb3.execute-api.ap-northeast-1.amazonaws.com",
+        "domainPrefix": "92miy3flb3",
+        "extendedRequestId": "IZBSSg-oIAMEPGA=",
+        "httpMethod": "POST",
+        "identity": {
+            "accessKey": null,
+            "accountId": null,
+            "caller": null,
+            "cognitoAuthenticationProvider": null,
+            "cognitoAuthenticationType": null,
+            "cognitoIdentityId": null,
+            "cognitoIdentityPoolId": null,
+            "principalOrgId": null,
+            "sourceIp": "147.92.149.170",
+            "user": null,
+            "userAgent": "LineBotWebhook/1.0",
+            "userArn": null
+        },
+        "path": "/default/orderSomething",
+        "protocol": "HTTP/1.1",
+        "requestId": "IZBSSg-oIAMEPGA=",
+        "requestTime": "24/Feb/2020:07:32:30 +0000",
+        "requestTimeEpoch": 1582529550529,
+        "resourceId": null,
+        "resourcePath": "/orderSomething",
+        "stage": "default"
+    },
+    "pathParameters": null,
+    "stageVariables": null,
+    "body": "{\"events\":[{\"type\":\"postback\",\"replyToken\":\"9c846ec160c44485b0914f6749ee12d1\",\"source\":{\"userId\":\"Uaae1c11daa5c03cb541147a9c02e04f6\",\"type\":\"user\"},\"timestamp\":1582529550358,\"mode\":\"active\",\"postback\":{\"data\":\"action=select&itemid=2&itemName=明治 チョコレート効果カカオ72%大容量ボックス 1kg\"}}],\"destination\":\"Ua1319e2ccc3f8f6ebabf3edb62ef323a\"}",
+    "isBase64Encoded": false
+}

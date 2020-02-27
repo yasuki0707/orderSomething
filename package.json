@@ -1,0 +1,21 @@
+{
+  "name": "yasbot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "@line/bot-sdk": "^6.8.4",
+    "bcrypt": "^4.0.0",
+    "chrome-aws-lambda": "^2.1.1",
+    "crypto": "^1.0.1",
+    "fs": "0.0.1-security",
+    "node-fetch": "^2.6.0",
+    "puppeteer-core": "^2.1.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "yasuki",
+  "license": "ISC"
+}

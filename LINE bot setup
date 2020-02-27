@@ -1,0 +1,11 @@
+set webhook URL on LINE Developers
+ URL can be specified on AWS Lambda - functions - Designer
+  -> add AWS Gateway as a trigger
+press verify button on LINE Developers with URL above being set(something like https://{domain}.execute-api.{arn}.amazonaws.com/default/{function-name})
+ -if error is displayed, there might be an error in function code.
+
+provider - account - 
+
+
+
+to allow bot to participate in groop chat, select option "グループ・複数人チャットへの参加を許可する" in https://manager.line.biz/account/{account_id}/setting

@@ -1,0 +1,89 @@
+{
+  "version": 2,
+  "path": "/default/orderSomething",
+  "httpMethod": "POST",
+  "headers": {
+    "Content-Length": "326",
+    "Content-Type": "application/json;charset=utf-8",
+    "Host": "92miy3flb3.execute-api.ap-northeast-1.amazonaws.com",
+    "User-Agent": "LineBotWebhook/1.0",
+    "X-Amzn-Trace-Id": "Root=1-5e50cafc-41301a865c4aa7ac55b116e2",
+    "X-Forwarded-For": "147.92.149.170",
+    "X-Forwarded-Port": "443",
+    "X-Forwarded-Proto": "https",
+    "X-Line-Signature": "eX7cHf8uOycouflHKIIpax4N3r8d6zSWZ1TUBjJ/0jI=",
+    "accept": "*/*"
+  },
+  "multiValueHeaders": {
+    "Content-Length": [
+      "326"
+    ],
+    "Content-Type": [
+      "application/json;charset=utf-8"
+    ],
+    "Host": [
+      "92miy3flb3.execute-api.ap-northeast-1.amazonaws.com"
+    ],
+    "User-Agent": [
+      "LineBotWebhook/1.0"
+    ],
+    "X-Amzn-Trace-Id": [
+      "Root=1-5e50cafc-41301a865c4aa7ac55b116e2"
+    ],
+    "X-Forwarded-For": [
+      "147.92.149.170"
+    ],
+    "X-Forwarded-Port": [
+      "443"
+    ],
+    "X-Forwarded-Proto": [
+      "https"
+    ],
+    "X-Line-Signature": [
+      "eX7cHf8uOycouflHKIIpax4N3r8d6zSWZ1TUBjJ/0jI="
+    ],
+    "accept": [
+      "*/*"
+    ]
+  },
+  "queryStringParameters": null,
+  "multiValueQueryStringParameters": null,
+  "requestContext": {
+    "accountId": "475353462291",
+    "apiId": "92miy3flb3",
+    "authorizer": {
+      "claims": null,
+      "scopes": null
+    },
+    "domainName": "92miy3flb3.execute-api.ap-northeast-1.amazonaws.com",
+    "domainPrefix": "92miy3flb3",
+    "extendedRequestId": "ISSndjuQIAMEKJg=",
+    "httpMethod": "POST",
+    "identity": {
+      "accessKey": null,
+      "accountId": null,
+      "caller": null,
+      "cognitoAuthenticationProvider": null,
+      "cognitoAuthenticationType": null,
+      "cognitoIdentityId": null,
+      "cognitoIdentityPoolId": null,
+      "principalOrgId": null,
+      "sourceIp": "147.92.149.170",
+      "user": null,
+      "userAgent": "LineBotWebhook/1.0",
+      "userArn": null
+    },
+    "path": "/default/orderSomething",
+    "protocol": "HTTP/1.1",
+    "requestId": "ISSndjuQIAMEKJg=",
+    "requestTime": "22/Feb/2020:06:32:28+0000",
+    "requestTimeEpoch": 1582353148421,
+    "resourceId": null,
+    "resourcePath": "/orderSomething",
+    "stage": "default"
+  },
+  "pathParameters": null,
+  "stageVariables": null,
+  "body": "{\"events\":[{\"type\":\"message\",\"replyToken\":\"a1e17f748f2e428b95a457064abc4f17\",\"source\":{\"userId\":\"Uaae1c11daa5c03cb541147a9c02e04f6\",\"type\":\"user\"},\"timestamp\":1582353148362,\"mode\":\"active\",\"message\":{\"type\":\"text\",\"id\":\"11473331850096\",\"text\":\"ミネラルウォーター\"}}],\"destination\":\"Ua1319e2ccc3f8f6ebabf3edb62ef323a\"}",
+  "isBase64Encoded": false
+}
