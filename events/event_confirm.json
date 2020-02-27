@@ -1,0 +1,89 @@
+{
+    "version": 2,
+    "path": "/default/orderSomething",
+    "httpMethod": "POST",
+    "headers": {
+        "Content-Length": "289",
+        "Content-Type": "application/json; charset=utf-8",
+        "Host": "92miy3flb3.execute-api.ap-northeast-1.amazonaws.com",
+        "User-Agent": "LineBotWebhook/1.0",
+        "X-Amzn-Trace-Id": "Root=1-5e538f0a-7a33703e99d7393297389a9e",
+        "X-Forwarded-For": "147.92.149.170",
+        "X-Forwarded-Port": "443",
+        "X-Forwarded-Proto": "https",
+        "X-Line-Signature": "wDVGOncfV+xcWRTUFckNKhf8CWhEYlYQS7i2lfvrMvA=",
+        "accept": "*/*"
+    },
+    "multiValueHeaders": {
+        "Content-Length": [
+            "289"
+        ],
+        "Content-Type": [
+            "application/json; charset=utf-8"
+        ],
+        "Host": [
+            "92miy3flb3.execute-api.ap-northeast-1.amazonaws.com"
+        ],
+        "User-Agent": [
+            "LineBotWebhook/1.0"
+        ],
+        "X-Amzn-Trace-Id": [
+            "Root=1-5e538f0a-7a33703e99d7393297389a9e"
+        ],
+        "X-Forwarded-For": [
+            "147.92.149.170"
+        ],
+        "X-Forwarded-Port": [
+            "443"
+        ],
+        "X-Forwarded-Proto": [
+            "https"
+        ],
+        "X-Line-Signature": [
+            "wDVGOncfV+xcWRTUFckNKhf8CWhEYlYQS7i2lfvrMvA="
+        ],
+        "accept": [
+            "*/*"
+        ]
+    },
+    "queryStringParameters": null,
+    "multiValueQueryStringParameters": null,
+    "requestContext": {
+        "accountId": "475353462291",
+        "apiId": "92miy3flb3",
+        "authorizer": {
+            "claims": null,
+            "scopes": null
+        },
+        "domainName": "92miy3flb3.execute-api.ap-northeast-1.amazonaws.com",
+        "domainPrefix": "92miy3flb3",
+        "extendedRequestId": "IZNJpgS0oAMEPDA=",
+        "httpMethod": "POST",
+        "identity": {
+            "accessKey": null,
+            "accountId": null,
+            "caller": null,
+            "cognitoAuthenticationProvider": null,
+            "cognitoAuthenticationType": null,
+            "cognitoIdentityId": null,
+            "cognitoIdentityPoolId": null,
+            "principalOrgId": null,
+            "sourceIp": "147.92.149.170",
+            "user": null,
+            "userAgent": "LineBotWebhook/1.0",
+            "userArn": null
+        },
+        "path": "/default/orderSomething",
+        "protocol": "HTTP/1.1",
+        "requestId": "IZNJpgS0oAMEPDA=",
+        "requestTime": "24/Feb/2020:08:53:30 +0000",
+        "requestTimeEpoch": 1582534410412,
+        "resourceId": null,
+        "resourcePath": "/orderSomething",
+        "stage": "default"
+    },
+    "pathParameters": null,
+    "stageVariables": null,
+    "body": "{\"events\":[{\"type\":\"postback\",\"replyToken\":\"a36b2027212545d9b8fbb2009d568fe2\",\"source\":{\"userId\":\"Uaae1c11daa5c03cb541147a9c02e04f6\",\"type\":\"user\"},\"timestamp\":1582534410379,\"mode\":\"active\",\"postback\":{\"data\":\"action=confirm&confirm=1\"}}],\"destination\":\"Ua1319e2ccc3f8f6ebabf3edb62ef323a\"}",
+    "isBase64Encoded": false
+}
