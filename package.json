@@ -1,5 +1,5 @@
 {
-  "name": "yasbot",
+  "name": "ordersomething",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,7 +8,6 @@
     "bcrypt": "^4.0.0",
     "chrome-aws-lambda": "^2.1.1",
     "crypto": "^1.0.1",
-    "fs": "0.0.1-security",
     "node-fetch": "^2.6.0",
     "puppeteer-core": "^2.1.1"
   },

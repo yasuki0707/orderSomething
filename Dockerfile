@@ -19,6 +19,6 @@ ADD ./index.js ./package.json ./
 
 #CMD should be in 1 statement
 #remove node_modules directory first, otherwise it will never be replaced new one
-CMD rm -r node_modules && npm install && zip -r deploy_package.zip .
+CMD rm -f -r node_modules && npm install && zip -r deploy_package.zip .
 
 #how to mount on layer?
