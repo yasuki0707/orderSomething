@@ -123,12 +123,12 @@ const puppeteer = require('puppeteer-core');
     let page = await browser.newPage();
 
     await page.goto(/*event.url || */'https://www.amazon.co.jp/ap/signin?_encoding=UTF8&ignoreAuthState=1&openid.assoc_handle=jpflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.co.jp%2F%3Fref_%3Dnav_signin&switch_account=');
-    await page.type('input[name="email"]', 'yasu19840707@gmail.com',{delay: 10});
+    await page.type('input[name="email"]', '****@****',{delay: 10});
     await page.click('#continue',{delay: 10})
 
     await page.waitForSelector('input[name="password"]')
 
-    await page.type('input[name="password"]', 'yasu0707',{delay: 10});
+    await page.type('input[name="password"]', '****',{delay: 10});
     await page.click('#signInSubmit',{delay: 10})
 
     const elm2 = 'input[type="text"]'
