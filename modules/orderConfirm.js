@@ -1,170 +1,146 @@
 // todo these must go to index.js outside of handler
 
 var func = async function(event_data) {
-    // load modules
-    const fetch = require('node-fetch');
-    const line = require('@line/bot-sdk');
+  // load modules
+  const lineToken = require("./line.js")
+  const token = await lineToken.getTokens(event_data)
+  const reply_token = token.reply_token
+  const access_token = token.access_token
 
-    const reply_token = event_data.events[0].replyToken;
-    console.log("reply_token:" + reply_token)
+  // when called from lamnda-local, replyMessage would be failed, should be avoided
+  const event_type = event_data.events[0].type
+  let mesObj
+  if(event_type=='message') {
+    /* should be ignored in case it has been invoked along with postback action */
+    if(global.itemSearchText) {
+      return
+    }
+    const searchText = event_data.events[0].message ? event_data.events[0].message.text : ''
+    console.log("searchText:" + searchText)
+    const items = await getMerchantList(searchText)
+    if(!items || items.length==0) {
+      console.log("failed to fetch any item:")
+      return
+    }
+    if(searchText) {
+      global.itemSearchText = searchText
+    }
+    console.log("number of items:" + items.length)
 
-    const CHANNEL_SECRET = process.env.CHANNEL_SECRET
-    const CHANNEL_ID = process.env.CHANNEL_ID
+    const actions = items.map((x, i) => {
+        const max = 20
+        const commaLen = 3
+        const strLen = x.title.length
+        const strShowLen = strLen > max ? max-commaLen : strLen
+        const padLen = Math.min(strLen, max)
+        return {
+        'type':'postback',
+        "label":x.title.slice(0,strShowLen).padEnd(padLen,'.'),
+        "data":`action=select&itemid=${i}&itemName=${x.title}`,
+        //"text":`I would like to order ${x.title}!`,
+        //"displayText":"I just ordered " + x.title,
+          }
+      })
+    global.itemUrls = items.map(x=>x.href)
+    //console.log(actions)
     
-    const API_URL = 'https://api.line.me/v2/oauth/accessToken'
-
-    const BODY = "grant_type=client_credentials"
-        + '&client_id=' + CHANNEL_ID
-        + '&client_secret=' + CHANNEL_SECRET
-
-    const options = {
-        method: 'POST',
-        headers: {
-            'Content-Type':'application/x-www-form-urlencoded',
-        },
-        body: BODY,
+    mesObj = {
+      type:'template',
+      altText:`order options for ${searchText} has been suggested`,
+      template:{
+        type:'buttons',
+        title:`Order for ${searchText}`,
+        text:`Please select the option you like?`,
+        actions: actions
+      }
     }
 
-    // TODO:use async/await
-    // なぜか一回目の実行ではここに入る前に終了してしまい、二回目の実行で前のギャグが送信されてしまう、時間差。。？
-    const response = await fetch(API_URL, options)
-    const json = await response.json()
-    const access_token = json.access_token
-    //console.log("access_token:" + access_token)
-    
-    // when called from lamnda-local, replyMessage would be failed, should be avoided
-    const event_type = event_data.events[0].type
-    let mesObj
-      if(event_type=='message') {
-        /* should be ignored in case it has been invoked along with postback action */
-        if(global.itemSearchText) {
-          return
+  } else if(event_type=='postback') {
+    //const itemUrl = postback_data.split('&').filter(x=>x.indexOf('itemurl')>=0)[0].split('=')[1]
+    // how itemurl is sent to users so they can make request for that item
+    //  - data length is 300, how about usage of /tmp or in-memory
+    if(!global.itemSearchText) {
+        mesObj = {
+          type:'text',
+          text:'Please resume the process again'
         }
-        const searchText = event_data.events[0].message ? event_data.events[0].message.text : ''
-        console.log("searchText:" + searchText)
-        const items = await getMerchantList(searchText)
-        if(!items || items.length==0) {
-          console.log("failed to fetch any item:")
-          return
-        }
-        if(searchText) {
-          global.itemSearchText = searchText
-        }
-        console.log("number of items:" + items.length)
-
-        const actions = items.map((x, i) => {
-            const max = 20
-            const commaLen = 3
-            const strLen = x.title.length
-            const strShowLen = strLen > max ? max-commaLen : strLen
-            const padLen = Math.min(strLen, max)
-           return {
-            'type':'postback',
-            "label":x.title.slice(0,strShowLen).padEnd(padLen,'.'),
-            "data":`action=select&itemid=${i}&itemName=${x.title}`,
-            //"text":`I would like to order ${x.title}!`,
-            //"displayText":"I just ordered " + x.title,
-             }
-          })
-        global.itemUrls = items.map(x=>x.href)
-        //console.log(actions)
-        
+    } else {
+      const postback_data = event_data.events[0].postback.data
+      const actionName = postback_data.split('&').filter(x=>x.indexOf('action')>=0)[0].split('=')[1]
+      
+      //console.log("postback_data:" + postback_data)
+      //console.log("actionName:" + actionName)
+      
+      if(actionName == 'select'){
+        global.itemId = postback_data.split('&').filter(x=>x.indexOf('itemid')>=0)[0].split('=')[1]
+        global.itemName = postback_data.split('&').filter(x=>x.indexOf('itemName')>=0)[0].split('=')[1]
+        const actions = ['Yes', 'No'].map((x, i) => {
+          return {
+          'type':'postback',
+          "label":x,
+          "data":`action=confirm&confirm=${1-i}`,// 1:yes, 0:no
+          //"text":1-i==1 ? 'Yes, please!' : 'No, thanks.',
+          }
+        })
         mesObj = {
           type:'template',
-          altText:`order options for ${searchText} has been suggested`,
+          altText:`confirmation for ${global.itemSearchText} has been suggested`,
           template:{
-            type:'buttons',
-            title:`Order for ${searchText}`,
-            text:`Please select the option you like?`,
+            type:'confirm',
+            text:`Are you sure to confirm to order ${global.itemName}?`,
             actions: actions
           }
         }
-
-      } else if(event_type=='postback') {
-        //const itemUrl = postback_data.split('&').filter(x=>x.indexOf('itemurl')>=0)[0].split('=')[1]
-        // how itemurl is sent to users so they can make request for that item
-        //  - data length is 300, how about usage of /tmp or in-memory
-        if(!global.itemSearchText) {
-            mesObj = {
-              type:'text',
-              text:'Please resume the process again'
-            }
-        } else {
-          const postback_data = event_data.events[0].postback.data
-          const actionName = postback_data.split('&').filter(x=>x.indexOf('action')>=0)[0].split('=')[1]
-          
-          //console.log("postback_data:" + postback_data)
-          //console.log("actionName:" + actionName)
-          
-          if(actionName == 'select'){
-            global.itemId = postback_data.split('&').filter(x=>x.indexOf('itemid')>=0)[0].split('=')[1]
-            global.itemName = postback_data.split('&').filter(x=>x.indexOf('itemName')>=0)[0].split('=')[1]
-            const actions = ['Yes', 'No'].map((x, i) => {
-             return {
-              'type':'postback',
-              "label":x,
-              "data":`action=confirm&confirm=${1-i}`,// 1:yes, 0:no
-              //"text":1-i==1 ? 'Yes, please!' : 'No, thanks.',
-              }
-            })
-            mesObj = {
-              type:'template',
-              altText:`confirmation for ${global.itemSearchText} has been suggested`,
-              template:{
-                type:'confirm',
-                text:`Are you sure to confirm to order ${global.itemName}?`,
-                actions: actions
-              }
-            }
-          } else if (actionName == 'confirm') {
-            //console.log("itemUrl[itemId]:" + global.itemUrls[global.itemId])
-            const confirm = parseInt(postback_data.split('&').filter(x=>x.indexOf('confirm')==0)[0].split('=')[1])
-            if(confirm==1) {
-              try {
-                var isOrderSuccess = await orderMerchant(global.itemUrls[global.itemId])
-                //var isOrderSuccess = await orderMerchant('https://www.amazon.co.jp/Amazon限定ブランド-良品物語-阿蘇くじゅう連山由来-ミネラルウォーター-525ml×40本/dp/B07Q42LYNM/ref=sr_1_3_sspa?__mk_ja_JP=カタカナ&keywords=ミネラルウォーター&qid=1582533538&sr=8-3-spons&psc=1&spLa=ZW5jcnlwdGVkUXVhbGlmaWVyPUExSzkwNVIxVTA1SjRWJmVuY3J5cHRlZElkPUEwNTAwMzEzOUJPMVpWUFZWODZKJmVuY3J5cHRlZEFkSWQ9QTNSUDRHQkQ2MlM2QlQmd2lkZ2V0TmFtZT1zcF9hdGYmYWN0aW9uPWNsaWNrUmVkaXJlY3QmZG9Ob3RMb2dDbGljaz10cnVl')
-              } catch(err) {
-                console.log(err)
-              }
-            } else {
-              //
-            }
-
-            let orderText
-            if(confirm==1) {
-              if(isOrderSuccess) {
-                orderText = 'order has been done successfully'
-              } else {
-                orderText = 'order has been made but failed'
-              }
-            } else if(confirm==0) {
-              orderText = 'order has been cancelled'
-            }
-
-            mesObj = {
-              type:'text',
-              text:orderText
-            }
-            // clear cache
-            clearCache()
+      } else if (actionName == 'confirm') {
+        //console.log("itemUrl[itemId]:" + global.itemUrls[global.itemId])
+        const confirm = parseInt(postback_data.split('&').filter(x=>x.indexOf('confirm')==0)[0].split('=')[1])
+        if(confirm==1) {
+          try {
+            var isOrderSuccess = await orderMerchant(global.itemUrls[global.itemId])
+            //var isOrderSuccess = await orderMerchant('https://www.amazon.co.jp/Amazon限定ブランド-良品物語-阿蘇くじゅう連山由来-ミネラルウォーター-525ml×40本/dp/B07Q42LYNM/ref=sr_1_3_sspa?__mk_ja_JP=カタカナ&keywords=ミネラルウォーター&qid=1582533538&sr=8-3-spons&psc=1&spLa=ZW5jcnlwdGVkUXVhbGlmaWVyPUExSzkwNVIxVTA1SjRWJmVuY3J5cHRlZElkPUEwNTAwMzEzOUJPMVpWUFZWODZKJmVuY3J5cHRlZEFkSWQ9QTNSUDRHQkQ2MlM2QlQmd2lkZ2V0TmFtZT1zcF9hdGYmYWN0aW9uPWNsaWNrUmVkaXJlY3QmZG9Ob3RMb2dDbGljaz10cnVl')
+          } catch(err) {
+            console.log(err)
           }
+        } else {
+          //
         }
-      }
 
-    try {
-      const client = new line.Client( {
-        channelAccessToken: access_token
-      })
-      if(process.env.DOCKER_LAMBDA) {
-        const userId = event_data.events[0].source.userId
-        await client.pushMessage(userId, mesObj)
-      } else {
-        let ret = await client.replyMessage(reply_token, mesObj)
+        let orderText
+        if(confirm==1) {
+          if(isOrderSuccess) {
+            orderText = 'order has been done successfully'
+          } else {
+            orderText = 'order has been made but failed'
+          }
+        } else if(confirm==0) {
+          orderText = 'order has been cancelled'
+        }
+
+        mesObj = {
+          type:'text',
+          text:orderText
+        }
+        // clear cache
+        clearCache()
       }
-    } catch(err) {
-      console.log(err)
     }
-    return
+  }
+
+  try {
+    const line = require('@line/bot-sdk');
+    const client = new line.Client( {
+      channelAccessToken: access_token
+    })
+    if(process.env.DOCKER_LAMBDA) {
+      const userId = event_data.events[0].source.userId
+      await client.pushMessage(userId, mesObj)
+    } else {
+      let ret = await client.replyMessage(reply_token, mesObj)
+    }
+  } catch(err) {
+    console.log(err)
+  }
+  return
 }
 
 function clearCache() {
