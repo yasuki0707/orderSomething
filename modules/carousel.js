@@ -1,3 +1,14 @@
+let locale = require('i18n')
+locale.configure({
+    locales: ['ja', 'en'],
+    defaultLocale: 'en',
+    directory: "./locales",
+    updateFiles: process.env.LOCALE_UPDATE || false,
+    objectNotation: true
+});
+locale.setLocale(process.env.LOCALE || 'ja')
+
+
 // todo these must go to index.js outside of handler
 var func = async function(event_data) {
 
@@ -23,8 +34,7 @@ var func = async function(event_data) {
       // send message to users showing fetch has been failed.
       mesObj = {
         type:'text',
-        text:`Failed to fetch items from Amazon.com.\
-              Please resume the process again.`
+        text: locale.__(`Failed to fetch items from Amazon. Please resume the process again.`)
       }
       //return
     } else {
@@ -49,7 +59,7 @@ var func = async function(event_data) {
       
       mesObj = {
         type:'template',
-        altText:`order options for ${searchText} has been suggested`,
+        altText: locale.__(`order options for {{searchText}} has been suggested`, {searchText: searchText}),
         template:{
           type:'carousel',
           columns: columns
@@ -62,7 +72,7 @@ var func = async function(event_data) {
     if(!global.itemSearchText && !process.env.DOCKER_LAMBDA) {
       mesObj = {
         type:'text',
-        text:'Please resume the process again'
+        text: locale.__('Please resume the process again')
       }
     } else {
       const postback_data = event_data.events[0].postback.data
@@ -81,10 +91,10 @@ var func = async function(event_data) {
         })
         mesObj = {
           type:'template',
-          altText:`confirmation for ${global.itemSearchText} has been suggested`,
+          altText: locale.__(`confirmation for {{searchText}} has been suggested`, {searchText: global.itemSearchText}),
           template:{
             type:'confirm',
-            text:`Are you sure to ${actionName} ${global.itemName}?`,
+            text: locale.__('Are you sure to {{action}} {{item}}?', {action: locale.__(actionName), item: global.itemName}),
             actions: actions
           }
         }
@@ -111,12 +121,12 @@ var func = async function(event_data) {
         let orderText
         if(confirm==1) {
           if(isActionSuccess) {
-            orderText = `${confirmAction} has been done successfully`
+            orderText = locale.__('{{action}} has been done successfully', {action: locale.__(confirmAction)})
           } else {
-            orderText = `${confirmAction} has been made but failed`
+            orderText = locale.__('{{action}} has been made but failed', {action: locale.__(confirmAction)})
           }
         } else if(confirm==0) {
-          orderText = `${confirmAction} has been cancelled`
+          orderText = locale.__('{{action}} has been cancelled', {action: locale.__(confirmAction)})
         }
 
         mesObj = {
@@ -159,18 +169,18 @@ function getCarouselActions(item, i) {
   /* purchase soon */
   actions.push({
     'type':'postback',
-    "label":'click to purchase',
+    "label": locale.__('click to purchase'),
     "data":`action=order&itemid=${i}&itemName=${item.title}`,
   })
   /* add to cart */
   actions.push({
     'type':'postback',
-    "label":'click to add in cart',
+    "label": locale.__('click to add in cart'),
     "data":`action=addcart&itemid=${i}&itemName=${item.title}`,
   })
   actions.push({
     'type':'uri',
-    "label":'go to Amazon',
+    "label": locale.__('go to Amazon'),
     "uri":item.href,
   })
   return actions

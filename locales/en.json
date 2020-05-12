@@ -1,0 +1,18 @@
+{
+	"order {{order}} has been suggested": "order {{order}} has been suggested",
+	"Failed to fetch items from Amazon. Please resume the process again.": "Failed to fetch items from Amazon. Please resume the process again.",
+	"order options for {{searchText}} has been suggested": "order options for {{searchText}} has been suggested",
+	"Please resume the process again": "Please resume the process again",
+	"confirmation for {{searchText}} has been suggested": "confirmation for {{searchText}} has been suggested",
+	"order": "Order",
+	"addcart": "Add to Cart",
+	"confirm": "Confirm",
+	"Are you sure to {{action}} {{item}}?": "Are you sure to {{action}} {{item}}?",
+	"{{action}} has been done successfully": "{{action}} has been done successfully",
+	"{{action}} has been made but failed": "{{action}} has been made but failed",
+	"{{action}} has been cancelled": "{{action}} has been cancelled",
+	"click to purchase": "Click to Purchase",
+	"click to add in cart": "Click to Add in Cart",
+	"go to Amazon": "Go to Amazon",
+	"test": "test"
+}
