@@ -1,0 +1,18 @@
+{
+	"order {{order}} has been suggested": "{{order}} の注文が提案されました。",
+	"Failed to fetch items from Amazon. Please resume the process again.": "商品の取得に失敗しました。最初からやり直してください。",
+	"order options for {{searchText}} has been suggested": "{{searchText}} の注文の選択肢が提案されました。",
+	"Please resume the process again": "最初からやり直してください。",
+	"confirmation for {{searchText}} has been suggested": "{{searchText}} の注文確認です。",
+	"order": "注文",
+	"addcart": "カート保存",
+	"confirm": "確定",
+    "Are you sure to {{action}} {{item}}?": "{{item}} を {{action}} しますか?",
+	"{{action}} has been done successfully": "{{action}} しました。",
+	"{{action}} has been made but failed": "{{action}} できませんでした。",
+	"{{action}} has been cancelled": "{{action}} をキャンセルしました。",
+	"click to purchase": "購入する",
+	"click to add in cart": "カートに追加する",
+	"go to Amazon": "Amazonサイトに行く",
+	"test": "テスト"
+}
