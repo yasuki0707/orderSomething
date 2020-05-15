@@ -2,6 +2,9 @@ let itemUrls = {}
 let itemId = ''
 let itemSearchText = ''
 let itemName = ''
+let email = ''
+let password = ''
+let LogginState = '' // 0:inputing username, 1:inputting password, 2:loggedin(cannot still search), 3:loggedin(can search)
 
 // todo list
 // _1. password encription(use DB to store at least username and password)

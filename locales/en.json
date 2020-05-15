@@ -14,5 +14,13 @@
 	"click to purchase": "Click to Purchase",
 	"click to add in cart": "Click to Add in Cart",
 	"go to Amazon": "Go to Amazon",
+	"login": "login",
+	"please input username": "Please Input Username",
+	"please input password": "Please Input Password",
+	"successfully logged in": "Successfully Logged In",
+	"you are already logged in": "You Are Already Logged In",
+	"Either Username or Password is incorrect. please input username": "Either Username or Password is incorrect. please input username",
+	"Yes": "Yes",
+	"No": "No",
 	"test": "test"
 }
