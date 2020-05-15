@@ -23,8 +23,6 @@ async function checkLoginInfo() {
     await page.type(emailSlct, global.email, {delay: 10});
     await page.click('#continue',{delay: 10})
     
-    console.log("global.email:" + global.email)
-    console.log("global.password:" + global.password)
     /* Execution context was destroyed, most likely because of a navigation. */
     try {
       await page.waitForSelector(alertSlct, {timeout: 3000} )
@@ -79,7 +77,10 @@ var func = async function(event_data) {
   const event_type = event_data.events[0].type
   let mesObj
   console.log("event_type:" + event_type)
+  console.log("global.email:" + global.email)
+  console.log("global.password:" + global.password)
   console.log("global.LogginState:" + global.LogginState)
+  console.log("global.itemCount:" + global.itemCount)
   if(event_type=='message') {
     const searchText = event_data.events[0].message ? event_data.events[0].message.text : ''
     console.log("searchText:" + searchText)
@@ -160,7 +161,7 @@ var func = async function(event_data) {
     //  - data length is 300, how about usage of /tmp or in-memory
     console.log(event_data)
     const postback_data = event_data.events[0].postback.data
-    const actionName = postback_data.split('&').filter(x=>x.indexOf('action')>=0)[0].split('=')[1]
+    const actionName = postback_data.split('&').filter(x=>x.indexOf('action')==0)[0].split('=')[1]
     if(actionName == 'login') {
       if(global.LogginState == 3) {
         mesObj = {
@@ -189,15 +190,70 @@ var func = async function(event_data) {
           text: locale.__("you are not logged in yet")
         }
       }
-    }
-    else if(!global.itemSearchText && !process.env.DOCKER_LAMBDA) {
+    } else if(actionName == 'item_count') {
+      if(global.LogginState == 3) {
+        mesObj = {
+          "type": "template",
+          "altText": locale.__("Item count select"),
+          "template": {
+              "type": "buttons",
+              //"thumbnailImageUrl": "https://example.com/bot/images/image.jpg",
+              //"imageAspectRatio": "rectangle",
+              //"imageSize": "cover",
+              //"imageBackgroundColor": "#FFFFFF",
+              //"title": locale.__("item count"),
+              "text": locale.__("How Many Items would you like"),
+              /*
+              "defaultAction": {
+                  "type": "uri",
+                  "label": "View detail",
+                  "uri": "http://example.com/page/123"
+              },
+              */
+              "actions": [
+                  {
+                    "type": "postback",
+                    "label": "1",
+                    "data": "action=select_item_count&item_count=1"
+                  },
+                  {
+                    "type": "postback",
+                    "label": "2",
+                    "data": "action=select_item_count&item_count=2"
+                  },
+                  {
+                    "type": "postback",
+                    "label": "4",
+                    "data": "action=select_item_count&item_count=4"
+                  },
+                  {
+                    "type": "postback",
+                    "label": "8",
+                    "data": "action=select_item_count&item_count=8"
+                  },
+              ]
+          }
+        }
+      } else {
+        mesObj = {
+          type:'text',
+          text: locale.__("Please input user name to login")
+        }
+      }
+    } else if(actionName == 'select_item_count') {
+      if(global.LogginState == 3) {
+        global.itemCount = postback_data.split('&').filter(x=>x.indexOf('item_count')==0)[0].split('=')[1]
+        mesObj = {
+          type:'text',
+          text: locale.__("Item Count has been set to {{itemCount}}", {itemCount: global.itemCount})
+        }
+      } else {
+      }
+    } else if(!global.itemSearchText && !process.env.DOCKER_LAMBDA) {
       mesObj = {
         type:'text',
         text: locale.__('Please resume the process again')
       }
-      //global.LogginState = 0
-      //global.username = ""
-      //global.password = ""
     } else {
       
       if(['order', 'addcart'].includes(actionName)){
@@ -227,18 +283,12 @@ var func = async function(event_data) {
 
         let isActionSuccess = false
         if(confirm==1) {
-          try {
-            if(confirmAction == 'order') {
-              isActionSuccess = await orderMerchant(global.itemUrls[global.itemId])
-            } else if (confirmAction == 'addcart') {
-              isActionSuccess = await addCartMerchant(global.itemUrls[global.itemId])
-            }
-          } catch(err) {
-            console.log(err)
+          if(confirmAction == 'order') {
+            isActionSuccess = await orderMerchant(global.itemUrls[global.itemId])
+          } else if (confirmAction == 'addcart') {
+            isActionSuccess = await addCartMerchant(global.itemUrls[global.itemId])
           }
-        } else {
-          //
-        }
+        } 
 
         let orderText
         if(confirm==1) {
@@ -305,6 +355,19 @@ var func = async function(event_data) {
             "type": "postback",
             "label": locale.__('logout'),
             "data": "action=logout"
+          }
+        },
+        {
+          "bounds": {
+            "x": 0,
+            "y": 200,
+            "width": 400,
+            "height": 200,
+          },
+          "action": {
+            "type": "postback",
+            "label": locale.__('item_count'),
+            "data": "action=item_count"
           }
         },
       ]
@@ -418,8 +481,6 @@ async function getPuppeteerBrowser() {
   
       await page.waitForSelector('input[name="password"]')
   
-      console.log("global.email:" + global.email)
-      console.log("global.password:" + global.password)
         //await page.type('input[name="password"]', AWSLoginInfo.password ,{delay: 10});
       await page.type('input[name="password"]', global.password ,{delay: 10});
       await page.click('#signInSubmit',{delay: 10})
@@ -447,7 +508,7 @@ async function getPuppeteerBrowser() {
         await page.waitForSelector(elm_show_cart_button)
         await page.click(elm_show_cart_button, {delay: 10})
       }
-      await page.waitForSelector(elm_add_to_cart)
+      await page.waitForSelector(elm_add_to_cart, {timeout: 3000})
       //await page.pdf({path: 'added_to_cart_success.pdf'})
       await page.click(elm_add_to_cart, {delay: 10})
       //console.log("merchant has been added to my cart!!")
@@ -520,7 +581,7 @@ console.log("time spent for page transition in orderMerchant:" + (endTime - star
 
 
 async function getMerchantList(searchText) {
-  const ITEM_NUM = 6
+  const ITEM_NUM = 4
 
   try {
     const browser = await getPuppeteerBrowser()
@@ -539,7 +600,7 @@ const startTime = (new Date()).getTime()
     await page.waitForSelector(elm3)
 
     console.log(`element:'${elm3}' has been found!`)
-    let itemNum = ITEM_NUM
+    let itemNum = global.itemCount || ITEM_NUM
     try {
       await page.waitForFunction((selector, n) => {
         return document.querySelectorAll(selector).length > n

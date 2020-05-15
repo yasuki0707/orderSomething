@@ -5,6 +5,7 @@ let itemName = ''
 let email = ''
 let password = ''
 let LogginState = '' // 0:inputing username, 1:inputting password, 2:loggedin(cannot still search), 3:loggedin(can search)
+let itemCount = 0
 
 // todo list
 // _1. password encription(use DB to store at least username and password)
