@@ -26,5 +26,9 @@
 	"Either Username or Password is incorrect. please input username": "Either Username or Password is incorrect. please input username",
 	"Yes": "Yes",
 	"No": "No",
+	"How Many Items would you like": "How Many Items would you like",
+	"Please input user name to login": "Please input user name to login",
+    "Item Count has been set to {{itemCount}}": "Item Count has been set to {{itemCount}}",
+	"Item count select": "Item count select",
 	"test": "test"
 }
