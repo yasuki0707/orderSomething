@@ -8,75 +8,182 @@ locale.configure({
 });
 locale.setLocale(process.env.LOCALE || 'ja')
 
+async function checkLoginInfo() {
+  const browser = await getPuppeteerBrowser()
+  let page = await browser.newPage()
+  let isCredentailCorrect = false
+
+  try {
+    const emailSlct = 'input[name="email"]'
+    const passSlct = 'input[name="password"]'
+    const alertSlct = '.a-alert-heading'
+
+    await page.goto('https://www.amazon.co.jp/ap/signin?_encoding=UTF8&ignoreAuthState=1&openid.assoc_handle=jpflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.co.jp%2F%3Fref_%3Dnav_signin&switch_account=');
+    //await page.waitForSelector(emailSlct)
+    await page.type(emailSlct, global.email, {delay: 10});
+    await page.click('#continue',{delay: 10})
+    
+    console.log("global.email:" + global.email)
+    console.log("global.password:" + global.password)
+    /* Execution context was destroyed, most likely because of a navigation. */
+    try {
+      await page.waitForSelector(alertSlct, {timeout: 3000} )
+      isCredentailCorrect = await page.evaluate(slct => {
+        return document.querySelectorAll(slct)[0].innerText !== "問題が発生しました。"
+      }, alertSlct)
+      console.log("email not exists as alert selector is found")
+    } catch (e) {
+      // email exists if there's no alert selector
+      isCredentailCorrect = true
+      console.log(e)
+      console.log("email exists")
+    }
+
+    console.log("email:" + isCredentailCorrect)
+
+    if(!isCredentailCorrect) {
+      throw new Error("Email was not found")
+    }
+
+    await page.waitForSelector(passSlct, {timeout: 3000} )
+
+    await page.type(passSlct, global.password, {delay: 10});
+    await page.click('#signInSubmit',{delay: 10})
+    try {
+      await page.waitForSelector(alertSlct, {timeout: 3000} )
+      isCredentailCorrect = await page.evaluate(slct => {
+          return document.querySelectorAll(slct)[0].innerText !== "問題が発生しました。"
+      }, alertSlct)
+    } catch (e) {
+      isCredentailCorrect = true
+      console.log(e)
+      console.log("password exists")
+    }
+    console.log("password:" + isCredentailCorrect)
+  } catch(e) {
+    if(e) {
+      console.log(e.constructor.name + ":" + e)
+      isCredentailCorrect = false
+    }
+  } finally {
+    await browser.close()
+  }
+
+  return isCredentailCorrect
+}
 
 // todo these must go to index.js outside of handler
 var func = async function(event_data) {
 
-  const lineToken = require("./line.js")
-  const token = await lineToken.getTokens(event_data)
-  const reply_token = token.reply_token
-  const access_token = token.access_token
-
   // when called from lamnda-local, replyMessage would be failed, should be avoided
   const event_type = event_data.events[0].type
   let mesObj
+  console.log("event_type:" + event_type)
+  console.log("global.LogginState:" + global.LogginState)
   if(event_type=='message') {
-    /* should be ignored in case it has been invoked along with postback action */
-    clearCache()
-    if(global.itemSearchText) {
-      return
-    }
     const searchText = event_data.events[0].message ? event_data.events[0].message.text : ''
     console.log("searchText:" + searchText)
-    const items = await getMerchantList(searchText)
-    if(!items || items.length==0) {
-      console.log("failed to fetch any item:")
-      // send message to users showing fetch has been failed.
-      mesObj = {
-        type:'text',
-        text: locale.__(`Failed to fetch items from Amazon. Please resume the process again.`)
-      }
-      //return
-    } else {
-      if(searchText) {
-        global.itemSearchText = searchText
-      }
-      console.log("number of items:" + items.length)
-
-      // TODO:goto amazon page or purchase immediately!
-      // 2 actions to be made here other than 1 which is postback action to be prepared section below.  
-      
-      const columns = items.map((x, i) => {
-        return {
-        "thumbnailImageUrl":x.img,
-        "text":require('../utils').getTextWithCommas(x.title, 60, 3),
-        "actions":getCarouselActions(x, i)
+    if(global.LogginState < 3) {
+      if(global.LogginState == 1) {
+        mesObj = {
+          type:'text',
+          text: locale.__(`please input password`)
         }
-      })
+        global.email = searchText
+      } else if(global.LogginState == 2) {
+        // TODO: at this moment, need to check if email and password are correct
+        //       if not, prompt a user to input again from the beggining
+        global.password = searchText
+        if(await checkLoginInfo()) {
+          mesObj = {
+            type:'text',
+            text: locale.__(`successfully logged in`)
+          }
+        } else {
+          mesObj = {
+            type:'text',
+            text: locale.__(`Either Username or Password is incorrect. please input username`)
+          }
+          global.email = ""
+          global.password = ""
+          global.LogginState = 0;
+        }
+      }
+      global.LogginState ++;
+    } else {
+      /* should be ignored in case it has been invoked along with postback action */
+      clearCache()
+      if(global.itemSearchText) {
+        return
+      }
+      const items = await getMerchantList(searchText)
+      if(!items || items.length==0) {
+        console.log("failed to fetch any item:")
+        // send message to users showing fetch has been failed.
+        mesObj = {
+          type:'text',
+          text: locale.__(`Failed to fetch items from Amazon. Please resume the process again.`)
+        }
+        //return
+      } else {
+        if(searchText) {
+          global.itemSearchText = searchText
+        }
+        console.log("number of items:" + items.length)
 
-      global.itemUrls = items.map(x=>x.href)
-      //console.log(actions)
-      
-      mesObj = {
-        type:'template',
-        altText: locale.__(`order options for {{searchText}} has been suggested`, {searchText: searchText}),
-        template:{
-          type:'carousel',
-          columns: columns
+        // TODO:goto amazon page or purchase immediately!
+        // 2 actions to be made here other than 1 which is postback action to be prepared section below.  
+        
+        const columns = items.map((x, i) => {
+          return {
+          "thumbnailImageUrl":x.img,
+          "text":require('../utils').getTextWithCommas(x.title, 60, 3),
+          "actions":getCarouselActions(x, i)
+          }
+        })
+
+        global.itemUrls = items.map(x=>x.href)
+        //console.log(actions)
+        
+        mesObj = {
+          type:'template',
+          altText: locale.__(`order options for {{searchText}} has been suggested`, {searchText: searchText}),
+          template:{
+            type:'carousel',
+            columns: columns
+          }
         }
       }
     }
   } else if(event_type=='postback') {
     // how itemurl is sent to users so they can make request for that item
     //  - data length is 300, how about usage of /tmp or in-memory
-    if(!global.itemSearchText && !process.env.DOCKER_LAMBDA) {
+    console.log(event_data)
+    const postback_data = event_data.events[0].postback.data
+    const actionName = postback_data.split('&').filter(x=>x.indexOf('action')>=0)[0].split('=')[1]
+    if(actionName == 'login') {
+      if(global.LogginState == 3) {
+        mesObj = {
+          type:'text',
+          text: locale.__("you are already logged in")
+        }
+      } else {
+        mesObj = {
+          type:'text',
+          text: locale.__("please input username")
+        }
+        global.LogginState = 1
+      }
+    }
+    else if(!global.itemSearchText && !process.env.DOCKER_LAMBDA) {
       mesObj = {
         type:'text',
         text: locale.__('Please resume the process again')
       }
+      //global.LogginState = 0
+      //global.username = ""
+      //global.password = ""
     } else {
-      const postback_data = event_data.events[0].postback.data
-      const actionName = postback_data.split('&').filter(x=>x.indexOf('action')>=0)[0].split('=')[1]
       
       if(['order', 'addcart'].includes(actionName)){
         global.itemId = postback_data.split('&').filter(x=>x.indexOf('itemid')>=0)[0].split('=')[1]
@@ -84,7 +191,7 @@ var func = async function(event_data) {
         const actions = ['Yes', 'No'].map((x, i) => {
           return {
             'type':'postback',
-            "label":x,
+            "label": locale.__(x),
             "data":`action=confirm&confirm=${1-i}&confirmAction=${actionName}`,// 1:yes, 0:no
             //"text":1-i==1 ? 'Yes, please!' : 'No, thanks.',
           }
@@ -135,15 +242,69 @@ var func = async function(event_data) {
         }
         // clear cache
         clearCache()
+      } else if(actionName == 'login') {
       }
     }
   }
+
+  const lineToken = require("./line.js")
+  const token = await lineToken.getTokens(event_data)
+  const reply_token = token.reply_token
+  const access_token = token.access_token
 
   try {
     const line = require('@line/bot-sdk');
     const client = new line.Client( {
       channelAccessToken: access_token
     })
+    const richMenu = {
+      "size": {
+        "width": 800,
+        "height": 250
+      },
+      "selected": false,
+      "name": "login",
+      "chatBarText": locale.__('login'),
+      "areas": [
+        {
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 800,
+            "height": 250,
+          },
+          "action": {
+            "type": "postback",
+            "label": locale.__('login'),
+            "data": "action=login"
+          }
+        },
+      ]
+    }
+    let richMenuId
+    const existingRichMenus = await client.getRichMenuList()
+    //const existingDefaultRichMenus = await client.getDefaultRichMenuId()
+    /*
+    await Promise.all(existingRichMenus.map(async (rm) => {
+      console.log("delete rich menu")
+      console.log(rm)
+      await client.deleteRichMenu(rm.richMenuId)
+    }))
+    await Promise.all(existingDefaultRichMenus.map(async (rm) => {
+      console.log("delete rich menu")
+      console.log(rm)
+      await client.deleteDefaultRichMenu(rm.richMenuId)
+    }))
+    */
+    if(existingRichMenus.length) {
+      richMenuId = existingRichMenus[0].richMenuId
+    } else {
+      richMenuId = await client.createRichMenu(richMenu)
+      await client.setRichMenuImage(richMenuId, require('fs').createReadStream("./maxresdefault.jpg"))
+      console.log(`new richMenu has been created: ${richMenuId}`)
+      await client.setDefaultRichMenu(richMenuId)
+    }
+    //await client.linkRichMenuToUser(event_data.events[0].source.userId, richMenuId)
     if(process.env.DOCKER_LAMBDA) {
       const userId = event_data.events[0].source.userId
       await client.pushMessage(userId, mesObj)
@@ -217,15 +378,19 @@ async function getPuppeteerBrowser() {
       const browser = await getPuppeteerBrowser()
       let page = await browser.newPage()
   
-      const mod = require('modules/login.js')
-      const AWSLoginInfo = await mod.getLoginInfoAmazon()
+      //const mod = require('modules/login.js')
+      //const AWSLoginInfo = await mod.getLoginInfoAmazon()
       await page.goto('https://www.amazon.co.jp/ap/signin?_encoding=UTF8&ignoreAuthState=1&openid.assoc_handle=jpflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.co.jp%2F%3Fref_%3Dnav_signin&switch_account=');
-      await page.type('input[name="email"]', AWSLoginInfo.email, {delay: 10});
+      //await page.type('input[name="email"]', AWSLoginInfo.email, {delay: 10});
+      await page.type('input[name="email"]', global.email, {delay: 10});
       await page.click('#continue',{delay: 10})
   
       await page.waitForSelector('input[name="password"]')
   
-      await page.type('input[name="password"]', AWSLoginInfo.password ,{delay: 10});
+      console.log("global.email:" + global.email)
+      console.log("global.password:" + global.password)
+        //await page.type('input[name="password"]', AWSLoginInfo.password ,{delay: 10});
+      await page.type('input[name="password"]', global.password ,{delay: 10});
       await page.click('#signInSubmit',{delay: 10})
       //page = await mod.loginAmazon(page)
   
@@ -257,7 +422,7 @@ async function getPuppeteerBrowser() {
       //console.log("merchant has been added to my cart!!")
       isSuccess = true
   const endTime = (new Date()).getTime()
-  console.log("time spent for page transition in orderMerchant:" + (endTime - startTime).toString() + 'ms')
+  console.log("time spent for page transition in addCartMerchant:" + (endTime - startTime).toString() + 'ms')
     } catch(err) {
       console.log(err)
     }
@@ -273,15 +438,17 @@ async function orderMerchant(url) {
     const browser = await getPuppeteerBrowser()
     let page = await browser.newPage()
 
-    const mod = require('modules/login.js')
-    const AWSLoginInfo = await mod.getLoginInfoAmazon()
+    //const mod = require('modules/login.js')
+    //const AWSLoginInfo = await mod.getLoginInfoAmazon()
     await page.goto('https://www.amazon.co.jp/ap/signin?_encoding=UTF8&ignoreAuthState=1&openid.assoc_handle=jpflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.co.jp%2F%3Fref_%3Dnav_signin&switch_account=');
-    await page.type('input[name="email"]', AWSLoginInfo.email, {delay: 10});
+    //await page.type('input[name="email"]', AWSLoginInfo.email, {delay: 10});
+    await page.type('input[name="email"]', global.email, {delay: 10});
     await page.click('#continue',{delay: 10})
 
     await page.waitForSelector('input[name="password"]')
 
-    await page.type('input[name="password"]', AWSLoginInfo.password ,{delay: 10});
+    //await page.type('input[name="password"]', AWSLoginInfo.password ,{delay: 10});
+    await page.type('input[name="password"]', global.password ,{delay: 10});
     await page.click('#signInSubmit',{delay: 10})
     //page = await mod.loginAmazon(page)
 

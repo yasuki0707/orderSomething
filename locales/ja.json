@@ -14,5 +14,13 @@
 	"click to purchase": "購入する",
 	"click to add in cart": "カートに追加する",
 	"go to Amazon": "Amazonサイトに行く",
+	"login": "ログイン",
+	"please input username": "ユーザー名を入力してください。",
+	"please input password": "パスワードを入力してください。",
+	"successfully logged in": "ログインしました。",
+	"you are already logged in": "すでにログインしています。",
+	"Either Username or Password is incorrect. please input username": "ユーザー名またはパスワードが正しくありません。ユーザー名の入力からやり直してください。",
+	"Yes": "はい",
+	"No": "いいえ",
 	"test": "テスト"
 }
