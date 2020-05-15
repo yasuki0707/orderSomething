@@ -7,7 +7,7 @@
 	"order": "注文",
 	"addcart": "カート保存",
 	"confirm": "確定",
-    "Are you sure to {{action}} {{item}}?": "{{item}} を {{action}} しますか?",
+	"Are you sure to {{action}} {{item}}?": "{{item}} を {{action}} しますか?",
 	"{{action}} has been done successfully": "{{action}} しました。",
 	"{{action}} has been made but failed": "{{action}} できませんでした。",
 	"{{action}} has been cancelled": "{{action}} をキャンセルしました。",
@@ -26,5 +26,9 @@
 	"Either Username or Password is incorrect. please input username": "ユーザー名またはパスワードが正しくありません。ユーザー名の入力からやり直してください。",
 	"Yes": "はい",
 	"No": "いいえ",
+	"How Many Items would you like": "表示する商品数を選んでください。",
+	"Please input user name to login": "ログインするにはユーザー名を入力してください。",
+	"Item Count has been set to {{itemCount}}": "商品表示数を {{itemCount}} に設定しました。",
+	"Item count select": "商品数選択",
 	"test": "テスト"
 }
