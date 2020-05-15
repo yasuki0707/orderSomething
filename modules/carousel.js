@@ -1,6 +1,10 @@
+const locales = [
+  {locale: 'en', name: 'English'},
+  {locale: 'ja', name: 'Japanese'},
+]
 let locale = require('i18n')
 locale.configure({
-    locales: ['ja', 'en'],
+    locales: locales.map(l=>l.locale),
     defaultLocale: 'en',
     directory: "./locales",
     updateFiles: process.env.LOCALE_UPDATE || false,
@@ -249,6 +253,14 @@ var func = async function(event_data) {
         }
       } else {
       }
+    } else if(actionName == 'change_locale') {
+      const toLocale = locale.getLocale() == 'ja' ? 'en' : 'ja'
+      locale.setLocale(toLocale)
+      const localeName = locales.filter(l=>l.locale==toLocale)[0]['name']
+      mesObj = {
+        type:'text',
+        text: locale.__('Language is set to {{locale}}', {locale: localeName})
+      }
     } else if(!global.itemSearchText && !process.env.DOCKER_LAMBDA) {
       mesObj = {
         type:'text',
@@ -370,6 +382,19 @@ var func = async function(event_data) {
             "data": "action=item_count"
           }
         },
+        {
+          "bounds": {
+            "x": 400,
+            "y": 200,
+            "width": 400,
+            "height": 200,
+          },
+          "action": {
+            "type": "postback",
+            "label": locale.__('change_locale'),
+            "data": "action=change_locale"
+          }
+        },
       ]
     }
     let richMenuId
@@ -394,7 +419,7 @@ var func = async function(event_data) {
       richMenuId = existingRichMenus[0].richMenuId
     } else {
       richMenuId = await client.createRichMenu(richMenu)
-      await client.setRichMenuImage(richMenuId, require('fs').createReadStream("./richmenu1.png"))
+      await client.setRichMenuImage(richMenuId, require('fs').createReadStream("./richmenu2.png"))
       console.log(`new richMenu has been created: ${richMenuId}`)
       await client.setDefaultRichMenu(richMenuId)
     }

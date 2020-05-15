@@ -30,5 +30,8 @@
 	"Please input user name to login": "Please input user name to login",
     "Item Count has been set to {{itemCount}}": "Item Count has been set to {{itemCount}}",
 	"Item count select": "Item count select",
+	"Language is set to {{locale}}": "Language is set to {{locale}}",
+	"English": "English",
+	"Japanese": "Japanese",
 	"test": "test"
 }
