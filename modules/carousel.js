@@ -174,6 +174,21 @@ var func = async function(event_data) {
         }
         global.LogginState = 1
       }
+    } else if(actionName == 'logout') {
+      if(global.LogginState == 3) {
+        mesObj = {
+          type:'text',
+          text: locale.__("you are logged out")
+        }
+        global.LogginState = 0
+        global.username = ""
+        global.password = ""
+      } else {
+        mesObj = {
+          type:'text',
+          text: locale.__("you are not logged in yet")
+        }
+      }
     }
     else if(!global.itemSearchText && !process.env.DOCKER_LAMBDA) {
       mesObj = {
@@ -260,23 +275,36 @@ var func = async function(event_data) {
     const richMenu = {
       "size": {
         "width": 800,
-        "height": 250
+        "height": 400
       },
-      "selected": false,
-      "name": "login",
-      "chatBarText": locale.__('login'),
+      "selected": true,
+      "name": "menu",
+      "chatBarText": locale.__('menu'),
       "areas": [
         {
           "bounds": {
             "x": 0,
             "y": 0,
-            "width": 800,
-            "height": 250,
+            "width": 400,
+            "height": 200,
           },
           "action": {
             "type": "postback",
             "label": locale.__('login'),
             "data": "action=login"
+          }
+        },
+        {
+          "bounds": {
+            "x": 400,
+            "y": 0,
+            "width": 400,
+            "height": 200,
+          },
+          "action": {
+            "type": "postback",
+            "label": locale.__('logout'),
+            "data": "action=logout"
           }
         },
       ]
@@ -285,22 +313,25 @@ var func = async function(event_data) {
     const existingRichMenus = await client.getRichMenuList()
     //const existingDefaultRichMenus = await client.getDefaultRichMenuId()
     /*
-    await Promise.all(existingRichMenus.map(async (rm) => {
+    const deletedItemCount = (await Promise.all(existingRichMenus.map(async (rm) => {
       console.log("delete rich menu")
       console.log(rm)
       await client.deleteRichMenu(rm.richMenuId)
-    }))
+    }))).length
+    */
+    /*
     await Promise.all(existingDefaultRichMenus.map(async (rm) => {
       console.log("delete rich menu")
       console.log(rm)
       await client.deleteDefaultRichMenu(rm.richMenuId)
     }))
     */
+    //if(deletedItemCount > 0 && existingRichMenus.length !== deletedItemCount) {
     if(existingRichMenus.length) {
       richMenuId = existingRichMenus[0].richMenuId
     } else {
       richMenuId = await client.createRichMenu(richMenu)
-      await client.setRichMenuImage(richMenuId, require('fs').createReadStream("./maxresdefault.jpg"))
+      await client.setRichMenuImage(richMenuId, require('fs').createReadStream("./richmenu1.png"))
       console.log(`new richMenu has been created: ${richMenuId}`)
       await client.setDefaultRichMenu(richMenuId)
     }
@@ -425,6 +456,7 @@ async function getPuppeteerBrowser() {
   console.log("time spent for page transition in addCartMerchant:" + (endTime - startTime).toString() + 'ms')
     } catch(err) {
       console.log(err)
+      isSuccess = false
     }
     await browser.close()
     return isSuccess
