@@ -88,7 +88,13 @@ var func = async function(event_data) {
   if(event_type=='message') {
     const searchText = event_data.events[0].message ? event_data.events[0].message.text : ''
     console.log("searchText:" + searchText)
-    if(global.LogginState < 3) {
+    if(!global.LogginState) {
+      mesObj = {
+        type:'text',
+        text: locale.__(`Please input user name to login`)
+      }
+      global.LogginState = 1;
+    } else if(global.LogginState < 3) {
       if(global.LogginState == 1) {
         mesObj = {
           type:'text',
@@ -186,8 +192,9 @@ var func = async function(event_data) {
           text: locale.__("you are logged out")
         }
         global.LogginState = 0
-        global.username = ""
+        global.email = ""
         global.password = ""
+        clearCache()
       } else {
         mesObj = {
           type:'text',
