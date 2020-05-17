@@ -148,7 +148,7 @@ var func = async function(event_data) {
         const columns = items.map((x, i) => {
           return {
           "thumbnailImageUrl":x.img,
-          "text":require('../utils').getTextWithCommas(x.title, 60, 3),
+          "text":require('../utils').getTextWithCommas(x.title, 60, 3) + (x.price ? `\n${x.price}円` : ""),
           "actions":getCarouselActions(x, i)
           }
         })
