@@ -88,6 +88,9 @@ var func = async function(event_data) {
   if(event_type=='message') {
     const searchText = event_data.events[0].message ? event_data.events[0].message.text : ''
     console.log("searchText:" + searchText)
+    if(process.env.DOCKER_LAMBDA) {
+      global.LogginState = 3
+    }
     if(!global.LogginState) {
       mesObj = {
         type:'text',
@@ -148,7 +151,7 @@ var func = async function(event_data) {
         const columns = items.map((x, i) => {
           return {
           "thumbnailImageUrl":x.img,
-          "text":require('../utils').getTextWithCommas(x.title, 60, 3),
+          "text":require('../utils').getTextWithCommas(x.title, 20, 3) + (x.price ? `\n${x.price}円` : "") + (x.reputation ? `\n${x.reputation}` : ""),
           "actions":getCarouselActions(x, i)
           }
         })
@@ -670,14 +673,14 @@ console.log("time spent page transition in getMerchantList:" + (endTime - startT
         const sTitle = "div:nth-child(3) > h2 > a > span"
         const sPrice = "div:nth-child(5) > div.a-row.a-size-base.a-color-base > div > a > span.a-price > span.a-offscreen"
         const sDelivery = "div:nth-child(6) > div > div > span:nth-child(2) > span.a-text-bold"
-        const sReputation = "div:nth-child(4) > div > span:nth-child(1) > span > a > i.a-icon.a-icon-star-small.a-star-small-4-5.aok-align-bottom > span"
+        const sReputation = "div:nth-child(4) > div > span"
         const sHref = "div:nth-child(3) > h2 > a"
         const sImg = "span > a > div > img"
 
         const title = baseDiv.querySelector(sTitle) ? baseDiv.querySelector(sTitle).innerText : ''
         const price = baseDiv.querySelector(sPrice) ? baseDiv.querySelector(sPrice).innerText : ''
         const delivery = baseDiv.querySelector(sDelivery) ? baseDiv.querySelector(sDelivery).innerText : ''
-        const reputation = baseDiv.querySelector(sReputation) ? baseDiv.querySelector(sReputation).innerText : ''
+        const reputation = baseDiv.querySelector(sReputation) ? baseDiv.querySelector(sReputation).getAttribute("aria-label") : ''
         const href = baseDiv.querySelector(sHref) ? baseDiv.querySelector(sHref).href : ''
         const img = baseDiv.querySelector(sImg) ? baseDiv.querySelector(sImg).src : ''
         // link longer than 1000 characters will be rejected by LINE SDK
