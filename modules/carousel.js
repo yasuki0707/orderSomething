@@ -1,3 +1,6 @@
+const setUserInfo = require('modules/userManager.js').setUserInfo
+const getUserInfo = require('modules/userManager.js').getUserInfo
+
 const locales = [
   {locale: 'en', name: 'English'},
   {locale: 'ja', name: 'Japanese'},
@@ -12,7 +15,7 @@ locale.configure({
 });
 locale.setLocale(process.env.LOCALE || 'ja')
 
-async function checkLoginInfo() {
+async function checkLoginInfo(userId) {
   const browser = await getPuppeteerBrowser()
   let page = await browser.newPage()
   let isCredentailCorrect = false
@@ -20,11 +23,12 @@ async function checkLoginInfo() {
   try {
     const emailSlct = 'input[name="email"]'
     const passSlct = 'input[name="password"]'
-    const alertSlct = '.a-alert-heading'
+    const alertSlct = '#auth-error-message-box > div > h4'
+    const alertSlct2 = ".a-alert-container"
 
     await page.goto('https://www.amazon.co.jp/ap/signin?_encoding=UTF8&ignoreAuthState=1&openid.assoc_handle=jpflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.co.jp%2F%3Fref_%3Dnav_signin&switch_account=');
     //await page.waitForSelector(emailSlct)
-    await page.type(emailSlct, global.email, {delay: 10});
+    await page.type(emailSlct, getUserInfo(userId, 'email'), {delay: 10});
     await page.click('#continue',{delay: 10})
     
     /* Execution context was destroyed, most likely because of a navigation. */
@@ -49,17 +53,16 @@ async function checkLoginInfo() {
 
     await page.waitForSelector(passSlct, {timeout: 3000} )
 
-    await page.type(passSlct, global.password, {delay: 10});
+    await page.type(passSlct, getUserInfo(userId, 'password'), {delay: 10});
     await page.click('#signInSubmit',{delay: 10})
     try {
-      await page.waitForSelector(alertSlct, {timeout: 3000} )
+      await page.waitForSelector(alertSlct2, {timeout: 2000} )
       isCredentailCorrect = await page.evaluate(slct => {
-          return document.querySelectorAll(slct)[0].innerText !== "問題が発生しました。"
-      }, alertSlct)
+          return document.querySelectorAll(slct).length == 0
+      }, alertSlct2)
     } catch (e) {
       isCredentailCorrect = true
       console.log(e)
-      console.log("password exists")
     }
     console.log("password:" + isCredentailCorrect)
   } catch(e) {
@@ -76,39 +79,42 @@ async function checkLoginInfo() {
 
 // todo these must go to index.js outside of handler
 var func = async function(event_data) {
-
   // when called from lamnda-local, replyMessage would be failed, should be avoided
   const event_type = event_data.events[0].type
+  const userId = event_data.events[0].source['userId']
+  if(process.env.DOCKER_LAMBDA) {
+    setUserInfo(userId, {LogginState: 3})
+  }
+  const logginState = getUserInfo(userId, 'LogginState')
+  const itemSearchText = getUserInfo(userId, 'itemSearchText')
+  console.log(`userId:${userId}`)
+  console.log(`itemSearchText:${itemSearchText}`)
+  console.log(`logginState:${logginState}`)
+  console.log(`email:${getUserInfo(userId, 'email')}`)
+  console.log(`password:${getUserInfo(userId, 'password')}`)
   let mesObj
   console.log("event_type:" + event_type)
-  console.log("global.email:" + global.email)
-  console.log("global.password:" + global.password)
-  console.log("global.LogginState:" + global.LogginState)
-  console.log("global.itemCount:" + global.itemCount)
   if(event_type=='message') {
     const searchText = event_data.events[0].message ? event_data.events[0].message.text : ''
     console.log("searchText:" + searchText)
-    if(process.env.DOCKER_LAMBDA) {
-      global.LogginState = 3
-    }
-    if(!global.LogginState) {
+    if(!logginState) {
       mesObj = {
         type:'text',
         text: locale.__(`Please input user name to login`)
       }
-      global.LogginState = 1;
-    } else if(global.LogginState < 3) {
-      if(global.LogginState == 1) {
+      setUserInfo(userId, {LogginState: 1})
+    } else if(logginState < 3) {
+      if(logginState == 1) {
         mesObj = {
           type:'text',
           text: locale.__(`please input password`)
         }
-        global.email = searchText
-      } else if(global.LogginState == 2) {
+        setUserInfo(userId, {email: searchText})
+      } else if(logginState == 2) {
         // TODO: at this moment, need to check if email and password are correct
         //       if not, prompt a user to input again from the beggining
-        global.password = searchText
-        if(await checkLoginInfo()) {
+        setUserInfo(userId, {password: searchText})
+        if(await checkLoginInfo(userId)) {
           mesObj = {
             type:'text',
             text: locale.__(`successfully logged in`)
@@ -118,19 +124,19 @@ var func = async function(event_data) {
             type:'text',
             text: locale.__(`Either Username or Password is incorrect. please input username`)
           }
-          global.email = ""
-          global.password = ""
-          global.LogginState = 0;
+          setUserInfo(userId, {email: ""})
+          setUserInfo(userId, {password: ""})
+          setUserInfo(userId, {LogginState: 0})
         }
       }
-      global.LogginState ++;
+      setUserInfo(userId, {LogginState: getUserInfo(userId, 'LogginState')+1})
     } else {
       /* should be ignored in case it has been invoked along with postback action */
-      clearCache()
-      if(global.itemSearchText) {
-        return
+      //clearCache(userId)
+      if(itemSearchText) {
+      //  return
       }
-      const items = await getMerchantList(searchText)
+      const items = await getMerchantList(searchText, userId)
       if(!items || items.length==0) {
         console.log("failed to fetch any item:")
         // send message to users showing fetch has been failed.
@@ -141,7 +147,7 @@ var func = async function(event_data) {
         //return
       } else {
         if(searchText) {
-          global.itemSearchText = searchText
+          setUserInfo(userId, {itemSearchText: searchText})
         }
         console.log("number of items:" + items.length)
 
@@ -156,7 +162,7 @@ var func = async function(event_data) {
           }
         })
 
-        global.itemUrls = items.map(x=>x.href)
+        setUserInfo(userId, {itemUrls: items.map(x=>x.href)})
         //console.log(actions)
         
         mesObj = {
@@ -176,7 +182,7 @@ var func = async function(event_data) {
     const postback_data = event_data.events[0].postback.data
     const actionName = postback_data.split('&').filter(x=>x.indexOf('action')==0)[0].split('=')[1]
     if(actionName == 'login') {
-      if(global.LogginState == 3) {
+      if(logginState == 3) {
         mesObj = {
           type:'text',
           text: locale.__("you are already logged in")
@@ -186,18 +192,19 @@ var func = async function(event_data) {
           type:'text',
           text: locale.__("please input username")
         }
-        global.LogginState = 1
+        setUserInfo(userId, {LogginState: 1})
       }
     } else if(actionName == 'logout') {
-      if(global.LogginState == 3) {
+      if(logginState == 3) {
         mesObj = {
           type:'text',
           text: locale.__("you are logged out")
         }
-        global.LogginState = 0
-        global.email = ""
-        global.password = ""
-        clearCache()
+        setUserInfo(userId, {LogginState: 0})
+        setUserInfo(userId, {itemCount: 4})
+        setUserInfo(userId, {email: ""})
+        setUserInfo(userId, {password: ""})
+        clearCache(userId)
       } else {
         mesObj = {
           type:'text',
@@ -205,7 +212,7 @@ var func = async function(event_data) {
         }
       }
     } else if(actionName == 'item_count') {
-      if(global.LogginState == 3) {
+      if(logginState == 3) {
         mesObj = {
           "type": "template",
           "altText": locale.__("Item count select"),
@@ -255,11 +262,11 @@ var func = async function(event_data) {
         }
       }
     } else if(actionName == 'select_item_count') {
-      if(global.LogginState == 3) {
-        global.itemCount = postback_data.split('&').filter(x=>x.indexOf('item_count')==0)[0].split('=')[1]
+      if(logginState == 3) {
+        setUserInfo(userId, {itemCount: postback_data.split('&').filter(x=>x.indexOf('item_count')==0)[0].split('=')[1]})
         mesObj = {
           type:'text',
-          text: locale.__("Item Count has been set to {{itemCount}}", {itemCount: global.itemCount})
+          text: locale.__("Item Count has been set to {{itemCount}}", {itemCount: getUserInfo(userId, 'itemCount')})
         }
       } else {
       }
@@ -271,7 +278,7 @@ var func = async function(event_data) {
         type:'text',
         text: locale.__('Language is set to {{locale}}', {locale: localeName})
       }
-    } else if(!global.itemSearchText && !process.env.DOCKER_LAMBDA) {
+    } else if(!itemSearchText && !process.env.DOCKER_LAMBDA) {
       mesObj = {
         type:'text',
         text: locale.__('Please resume the process again')
@@ -279,8 +286,8 @@ var func = async function(event_data) {
     } else {
       
       if(['order', 'addcart'].includes(actionName)){
-        global.itemId = postback_data.split('&').filter(x=>x.indexOf('itemid')>=0)[0].split('=')[1]
-        global.itemName = postback_data.split('&').filter(x=>x.indexOf('itemName')>=0)[0].split('=')[1]
+        setUserInfo(userId, {itemId: postback_data.split('&').filter(x=>x.indexOf('itemid')>=0)[0].split('=')[1]})
+        setUserInfo(userId, {itemName: postback_data.split('&').filter(x=>x.indexOf('itemName')>=0)[0].split('=')[1]})
         const actions = ['Yes', 'No'].map((x, i) => {
           return {
             'type':'postback',
@@ -291,10 +298,10 @@ var func = async function(event_data) {
         })
         mesObj = {
           type:'template',
-          altText: locale.__(`confirmation for {{searchText}} has been suggested`, {searchText: global.itemSearchText}),
+          altText: locale.__(`confirmation for {{searchText}} has been suggested`, {searchText: itemSearchText}),
           template:{
             type:'confirm',
-            text: locale.__('Are you sure to {{action}} {{item}}?', {action: locale.__(actionName), item: global.itemName}),
+            text: locale.__('Are you sure to {{action}} {{item}}?', {action: locale.__(actionName), item: getUserInfo(userId, 'itemName')}),
             actions: actions
           }
         }
@@ -305,10 +312,11 @@ var func = async function(event_data) {
 
         let isActionSuccess = false
         if(confirm==1) {
+          const itemUrl = getUserInfo(userId,'itemUrls')[getUserInfo(userId,'itemId')]
           if(confirmAction == 'order') {
-            isActionSuccess = await orderMerchant(global.itemUrls[global.itemId])
+            isActionSuccess = await orderMerchant(itemUrl, userId)
           } else if (confirmAction == 'addcart') {
-            isActionSuccess = await addCartMerchant(global.itemUrls[global.itemId])
+            isActionSuccess = await addCartMerchant(itemUrl, userId)
           }
         } 
 
@@ -328,7 +336,7 @@ var func = async function(event_data) {
           text:orderText
         }
         // clear cache
-        clearCache()
+        clearCache(userId)
       } else if(actionName == 'login') {
       }
     }
@@ -362,7 +370,6 @@ var func = async function(event_data) {
           },
           "action": {
             "type": "postback",
-            "label": locale.__('login'),
             "data": "action=login"
           }
         },
@@ -375,7 +382,6 @@ var func = async function(event_data) {
           },
           "action": {
             "type": "postback",
-            "label": locale.__('logout'),
             "data": "action=logout"
           }
         },
@@ -388,7 +394,6 @@ var func = async function(event_data) {
           },
           "action": {
             "type": "postback",
-            "label": locale.__('item_count'),
             "data": "action=item_count"
           }
         },
@@ -401,7 +406,6 @@ var func = async function(event_data) {
           },
           "action": {
             "type": "postback",
-            "label": locale.__('change_locale'),
             "data": "action=change_locale"
           }
         },
@@ -476,11 +480,11 @@ function getCarouselActions(item, i) {
   return actions
 }
 
-function clearCache() {
-    global.itemUrls = {}
-    global.itemId = ''
-    global.itemSearchText = ''
-    global.itemName = ''
+function clearCache(userId) {
+  setUserInfo(userId, {itemUrl: {}})
+  setUserInfo(userId, {itemId: ""})
+  setUserInfo(userId, {itemSearchText: ""})
+  setUserInfo(userId, {itemName: ""})
 }
 
 async function getPuppeteerBrowser() {
@@ -500,7 +504,7 @@ async function getPuppeteerBrowser() {
   }
 }
 
-  async function addCartMerchant(url) {
+  async function addCartMerchant(url, userId) {
 
     let isSuccess = false
     try {
@@ -511,13 +515,13 @@ async function getPuppeteerBrowser() {
       //const AWSLoginInfo = await mod.getLoginInfoAmazon()
       await page.goto('https://www.amazon.co.jp/ap/signin?_encoding=UTF8&ignoreAuthState=1&openid.assoc_handle=jpflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.co.jp%2F%3Fref_%3Dnav_signin&switch_account=');
       //await page.type('input[name="email"]', AWSLoginInfo.email, {delay: 10});
-      await page.type('input[name="email"]', global.email, {delay: 10});
+      await page.type('input[name="email"]', getUserInfo(userId, 'email'), {delay: 10});
       await page.click('#continue',{delay: 10})
   
       await page.waitForSelector('input[name="password"]')
   
         //await page.type('input[name="password"]', AWSLoginInfo.password ,{delay: 10});
-      await page.type('input[name="password"]', global.password ,{delay: 10});
+      await page.type('input[name="password"]', getUserInfo(userId, 'password') ,{delay: 10});
       await page.click('#signInSubmit',{delay: 10})
       //page = await mod.loginAmazon(page)
   
@@ -559,7 +563,7 @@ async function getPuppeteerBrowser() {
   }
   
 
-async function orderMerchant(url) {
+async function orderMerchant(url, userId) {
 
   let isSuccess = false
   try {
@@ -570,13 +574,13 @@ async function orderMerchant(url) {
     //const AWSLoginInfo = await mod.getLoginInfoAmazon()
     await page.goto('https://www.amazon.co.jp/ap/signin?_encoding=UTF8&ignoreAuthState=1&openid.assoc_handle=jpflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.co.jp%2F%3Fref_%3Dnav_signin&switch_account=');
     //await page.type('input[name="email"]', AWSLoginInfo.email, {delay: 10});
-    await page.type('input[name="email"]', global.email, {delay: 10});
+    await page.type('input[name="email"]', getUserInfo(userId, 'email'), {delay: 10});
     await page.click('#continue',{delay: 10})
 
     await page.waitForSelector('input[name="password"]')
 
     //await page.type('input[name="password"]', AWSLoginInfo.password ,{delay: 10});
-    await page.type('input[name="password"]', global.password ,{delay: 10});
+    await page.type('input[name="password"]', getUserInfo(userId, 'password') ,{delay: 10});
     await page.click('#signInSubmit',{delay: 10})
     //page = await mod.loginAmazon(page)
 
@@ -615,7 +619,7 @@ console.log("time spent for page transition in orderMerchant:" + (endTime - star
 }
 
 
-async function getMerchantList(searchText) {
+async function getMerchantList(searchText, userId) {
   const ITEM_NUM = 4
 
   try {
@@ -635,7 +639,7 @@ const startTime = (new Date()).getTime()
     await page.waitForSelector(elm3)
 
     console.log(`element:'${elm3}' has been found!`)
-    let itemNum = global.itemCount || ITEM_NUM
+    let itemNum = getUserInfo(userId, 'itemCount') || ITEM_NUM
     try {
       await page.waitForFunction((selector, n) => {
         return document.querySelectorAll(selector).length > n
