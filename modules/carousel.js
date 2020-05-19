@@ -1,5 +1,6 @@
 const setUserInfo = require('modules/userManager.js').setUserInfo
 const getUserInfo = require('modules/userManager.js').getUserInfo
+const uploadS3 = require('modules/s3Manager.js').uploadS3
 
 const locales = [
   {locale: 'en', name: 'English'},
@@ -56,7 +57,7 @@ async function checkLoginInfo(userId) {
     await page.type(passSlct, getUserInfo(userId, 'password'), {delay: 10});
     await page.click('#signInSubmit',{delay: 10})
     try {
-      await page.waitForSelector(alertSlct2, {timeout: 2000} )
+      await page.waitForSelector(alertSlct2, {timeout: 3000} )
       isCredentailCorrect = await page.evaluate(slct => {
           return document.querySelectorAll(slct).length == 0
       }, alertSlct2)
@@ -548,7 +549,6 @@ async function getPuppeteerBrowser() {
         await page.click(elm_show_cart_button, {delay: 10})
       }
       await page.waitForSelector(elm_add_to_cart, {timeout: 3000})
-      //await page.pdf({path: 'added_to_cart_success.pdf'})
       await page.click(elm_add_to_cart, {delay: 10})
       //console.log("merchant has been added to my cart!!")
       isSuccess = true
@@ -605,7 +605,6 @@ const startTime = (new Date()).getTime()
       await page.click(elm_show_cart_button, {delay: 10})
     }
     await page.waitForSelector(elm_buy_now)
-    //await page.pdf({path: 'added_to_cart_success.pdf'})
     await page.click(elm_buy_now, {delay: 10})
     //console.log("merchant has been added to my cart!!")
     isSuccess = true
@@ -660,7 +659,6 @@ const startTime = (new Date()).getTime()
     const endTime = (new Date()).getTime()
 console.log("time spent page transition in getMerchantList:" + (endTime - startTime).toString() + 'ms')
 
-    //await page.pdf({path: 'page_searchResult.pdf'})
     const items = await page.evaluate((elm, itemNum) => {
       divs = document.querySelectorAll(elm);
       let count = 0
@@ -713,5 +711,11 @@ console.log("time spent page transition in getMerchantList:" + (endTime - startT
     }
   }*/
 }
+
+async function captureScreen(page, filePath) {
+  await page.pdf({path: filePath})
+  await uploadS3(filePath)
+}
+
 
 module.exports.func = func
