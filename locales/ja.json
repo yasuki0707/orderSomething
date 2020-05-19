@@ -33,7 +33,5 @@
 	"Language is set to {{locale}}": "言語を{{locale}}に設定しました。",
 	"English": "英語",
 	"Japanese": "日本語",
-	"test": "テスト",
-	"item_count": "item_count",
-	"change_locale": "change_locale"
+	"test": "テスト"
 }
