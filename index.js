@@ -15,7 +15,7 @@ let userInfo = []
 // 9. scroll in search result to grab as many as items and avoid the situation where there is no items listed.
 
 exports.handler = async (event, context, callback) => {
-
+console.log("this is test")
 //	context.callbackWaitsForEmptyEventLoop = false
     const CHANNEL_SECRET = process.env.CHANNEL_SECRET
     
