@@ -16,6 +16,7 @@ let userInfo = []
 
 exports.handler = async (event, context, callback) => {
 console.log("this is test")
+console.log("this is test2")
 //	context.callbackWaitsForEmptyEventLoop = false
     const CHANNEL_SECRET = process.env.CHANNEL_SECRET
     
