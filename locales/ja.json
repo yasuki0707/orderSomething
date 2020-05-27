@@ -33,5 +33,6 @@
 	"Language is set to {{locale}}": "言語を{{locale}}に設定しました。",
 	"English": "英語",
 	"Japanese": "日本語",
+	"Please input search text.": "検索したい商品を入力してください。",
 	"test": "テスト"
 }

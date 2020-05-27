@@ -93,38 +93,43 @@ var func = async function(event_data) {
   console.log(`logginState:${logginState}`)
   console.log(`email:${getUserInfo(userId, 'email')}`)
   console.log(`password:${getUserInfo(userId, 'password')}`)
-  let mesObj
+  let mesObj = []
   console.log("event_type:" + event_type)
+  const mesObj2 = {
+    type:'text',
+    text: locale.__(`Please input search text.`)
+  }
   if(event_type=='message') {
     const searchText = event_data.events[0].message ? event_data.events[0].message.text : ''
     console.log("searchText:" + searchText)
     if(!logginState) {
-      mesObj = {
+      mesObj.push({
         type:'text',
         text: locale.__(`Please input user name to login`)
-      }
+      })
       setUserInfo(userId, {LogginState: 1})
     } else if(logginState < 3) {
       if(logginState == 1) {
-        mesObj = {
+        mesObj.push({
           type:'text',
           text: locale.__(`please input password`)
-        }
+        })
         setUserInfo(userId, {email: searchText})
       } else if(logginState == 2) {
         // TODO: at this moment, need to check if email and password are correct
         //       if not, prompt a user to input again from the beggining
         setUserInfo(userId, {password: searchText})
         if(await checkLoginInfo(userId)) {
-          mesObj = {
+          mesObj.push({
             type:'text',
             text: locale.__(`successfully logged in`)
-          }
+          })
+          mesObj.push(mesObj2)
         } else {
-          mesObj = {
+          mesObj.push({
             type:'text',
             text: locale.__(`Either Username or Password is incorrect. please input username`)
-          }
+          })
           setUserInfo(userId, {email: ""})
           setUserInfo(userId, {password: ""})
           setUserInfo(userId, {LogginState: 0})
@@ -141,10 +146,10 @@ var func = async function(event_data) {
       if(!items || items.length==0) {
         console.log("failed to fetch any item:")
         // send message to users showing fetch has been failed.
-        mesObj = {
+        mesObj.push({
           type:'text',
           text: locale.__(`Failed to fetch items from Amazon. Please resume the process again.`)
-        }
+        })
         //return
       } else {
         if(searchText) {
@@ -166,14 +171,14 @@ var func = async function(event_data) {
         setUserInfo(userId, {itemUrls: items.map(x=>x.href)})
         //console.log(actions)
         
-        mesObj = {
+        mesObj.push({
           type:'template',
           altText: locale.__(`order options for {{searchText}} has been suggested`, {searchText: searchText}),
           template:{
             type:'carousel',
             columns: columns
           }
-        }
+        })
       }
     }
   } else if(event_type=='postback') {
@@ -184,37 +189,37 @@ var func = async function(event_data) {
     const actionName = postback_data.split('&').filter(x=>x.indexOf('action')==0)[0].split('=')[1]
     if(actionName == 'login') {
       if(logginState == 3) {
-        mesObj = {
+        mesObj.push({
           type:'text',
           text: locale.__("you are already logged in")
-        }
+        })
       } else {
-        mesObj = {
+        mesObj.push({
           type:'text',
           text: locale.__("please input username")
-        }
+        })
         setUserInfo(userId, {LogginState: 1})
       }
     } else if(actionName == 'logout') {
       if(logginState == 3) {
-        mesObj = {
+        mesObj.push({
           type:'text',
           text: locale.__("you are logged out")
-        }
+        })
         setUserInfo(userId, {LogginState: 0})
         setUserInfo(userId, {itemCount: 4})
         setUserInfo(userId, {email: ""})
         setUserInfo(userId, {password: ""})
         clearCache(userId)
       } else {
-        mesObj = {
+        mesObj.push({
           type:'text',
           text: locale.__("you are not logged in yet")
-        }
+        })
       }
     } else if(actionName == 'item_count') {
       if(logginState == 3) {
-        mesObj = {
+        mesObj.push({
           "type": "template",
           "altText": locale.__("Item count select"),
           "template": {
@@ -255,35 +260,40 @@ var func = async function(event_data) {
                   },
               ]
           }
-        }
+        })
       } else {
-        mesObj = {
+        mesObj.push({
           type:'text',
           text: locale.__("Please input user name to login")
-        }
+        })
       }
     } else if(actionName == 'select_item_count') {
       if(logginState == 3) {
         setUserInfo(userId, {itemCount: postback_data.split('&').filter(x=>x.indexOf('item_count')==0)[0].split('=')[1]})
-        mesObj = {
+        mesObj.push({
           type:'text',
           text: locale.__("Item Count has been set to {{itemCount}}", {itemCount: getUserInfo(userId, 'itemCount')})
-        }
+        })
+        mesObj.push(mesObj2)
       } else {
       }
     } else if(actionName == 'change_locale') {
       const toLocale = locale.getLocale() == 'ja' ? 'en' : 'ja'
       locale.setLocale(toLocale)
-      const localeName = locales.filter(l=>l.locale==toLocale)[0]['name']
-      mesObj = {
+      const localeName = locales.find(l=>l.locale==toLocale)['name']
+      mesObj.push({
         type:'text',
         text: locale.__('Language is set to {{locale}}', {locale: localeName})
+      })
+      if(logginState == 3) {
+        mesObj2['text'] = locale.__(`Please input search text.`)
+        mesObj.push(mesObj2)
       }
     } else if(!itemSearchText && !process.env.DOCKER_LAMBDA) {
-      mesObj = {
+      mesObj.push({
         type:'text',
         text: locale.__('Please resume the process again')
-      }
+      })
     } else {
       
       if(['order', 'addcart'].includes(actionName)){
@@ -297,7 +307,7 @@ var func = async function(event_data) {
             //"text":1-i==1 ? 'Yes, please!' : 'No, thanks.',
           }
         })
-        mesObj = {
+        mesObj.push({
           type:'template',
           altText: locale.__(`confirmation for {{searchText}} has been suggested`, {searchText: itemSearchText}),
           template:{
@@ -305,7 +315,7 @@ var func = async function(event_data) {
             text: locale.__('Are you sure to {{action}} {{item}}?', {action: locale.__(actionName), item: getUserInfo(userId, 'itemName')}),
             actions: actions
           }
-        }
+        })
       } else if (actionName == 'confirm') {
         const confirm = parseInt(postback_data.split('&').filter(x=>x.indexOf('confirm')==0)[0].split('=')[1])
         const confirmAction = postback_data.split('&').filter(x=>x.indexOf('confirmAction')==0)[0].split('=')[1]
@@ -332,10 +342,11 @@ var func = async function(event_data) {
           orderText = locale.__('{{action}} has been cancelled', {action: locale.__(confirmAction)})
         }
 
-        mesObj = {
+        mesObj.push({
           type:'text',
           text:orderText
-        }
+        })
+        mesObj.push(mesObj2)
         // clear cache
         clearCache(userId)
       } else if(actionName == 'login') {
@@ -444,7 +455,8 @@ var func = async function(event_data) {
       await client.pushMessage(userId, mesObj)
     } else {
       // 400 error(bad request) for the 3rd order request..?
-      let ret = await client.replyMessage(reply_token, mesObj)
+      let ret = await client.replyMessage(reply_token, mesObj[0])
+      await client.pushMessage(userId, mesObj[1])
       return ret
     }
   } catch(err) {
