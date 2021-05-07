@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "@line/bot-sdk": "^7.2.0",
+    "@line/bot-sdk": "^7.3.0",
     "bcrypt": "^5.0.0",
     "chrome-aws-lambda": "^5.5.0",
     "crypto": "^1.0.1",
