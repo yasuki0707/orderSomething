@@ -8,6 +8,9 @@ docker build -t order_something:latest .
 ## build container
 docker run --rm -v "$PWD":/var/task order_something:latest
 
+## create a zip file
+zip -r deploy_package.zip .
+
 ## upload zip file to AWS Lambda
 aws lambda update-function-code --function-name orderSomething --zip-file fileb://deploy_package.zip
 
