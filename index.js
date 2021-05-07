@@ -31,7 +31,8 @@ exports.handler = async (event, context, callback) => {
     } else {
         //console.log("CHANNEL_SECRET:" + CHANNEL_SECRET)
     	let hash = crypto.createHmac('sha256', CHANNEL_SECRET).update(event.body).digest('base64');
-    	let signature = (event.headers || {})['X-Line-Signature']
+        let signature = (event.headers || {})['x-line-signature']
+        console.log(event.headers)
     	console.log(`check the signature: hash=${hash}, signature=${signature}`)
     
     	if(hash == signature) {
